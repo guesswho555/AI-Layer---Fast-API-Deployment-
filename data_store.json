@@ -1,0 +1,61 @@
+{
+  "companies": [
+    {
+      "name": "Baksters",
+      "description": "Baksters is a consulting and software development company based in Thailand, specializing in cutting-edge AI and deep machine learning solutions. The company recognizes the needs of marketers for comprehensive analysis systems for images and videos, and has developed various innovative solutions to facilitate the transformation into a data-driven business. With a focus on leveraging advanced technologies, Baksters aims to empower businesses by providing tools that enhance decision-making and operational efficiency.\n\nThe company offers a range of services that include big data analytics, computer vision, deep learning, and natural language processing. Their solutions, such as MANAVIS for video analytics, FinalScan for quality control in manufacturing, SONDHANA for customer insights, and WaiJai for facility monitoring, are designed to meet the diverse needs of clients across various industries. Baksters is committed to delivering high-quality, data-driven solutions that help businesses thrive in an increasingly competitive landscape.",
+      "industry": "Technology",
+      "size": "Startup",
+      "location": "Bangkok, Thailand",
+      "specialties": [
+        "Artificial Intelligence",
+        "Deep Machine Learning",
+        "Big Data",
+        "Computer Vision",
+        "Natural Language Processing"
+      ],
+      "services": [
+        "Data Analytics",
+        "Video Analytics",
+        "Quality Control Systems",
+        "Customer Insights Platforms",
+        "Facility Monitoring Solutions"
+      ],
+      "website": "https://www.baksters.com",
+      "founded": null,
+      "mission": null,
+      "url": "https://www.baksters.com",
+      "added_at": "2025-11-28T20:38:47.146357"
+    },
+    {
+      "name": "iReadCustomer",
+      "description": "iReadCustomer is an AI and data analytics platform specializing in business intelligence. The company focuses on transforming raw data into actionable strategies, enabling businesses to enhance their operations and gain a competitive edge. They provide solutions designed to support expansion across the ASEAN region, helping companies reduce operational costs and drive revenue growth through data-driven insights.\n\nThe platform offers a suite of AI-powered tools and custom solutions tailored to specific industry needs for digital transformation. These include interactive executive dashboards with AI virtual analysts for real-time business recommendations, advanced natural language processing that supports over 8 Southeast Asian languages, and automated systems for lead generation and reducing repetitive tasks. Their goal is to empower businesses to not just manage data, but to leverage it for superior performance and strategic decision-making.",
+      "industry": "AI & Data Analytics",
+      "size": "Startup",
+      "location": "Thailand",
+      "specialties": [
+        "AI & Data",
+        "Business Intelligence",
+        "Digital Transformation",
+        "Multi-language AI Analysis (ASEAN)",
+        "Software Development",
+        "Data Science",
+        "MarTech"
+      ],
+      "services": [
+        "Custom AI & Business Intelligence Solutions",
+        "Interactive BI Dashboards & AI Assistants",
+        "Lead Gen AI",
+        "AI Chat & RAG",
+        "AI Automation",
+        "Unified Data Platform",
+        "Custom Software Development"
+      ],
+      "website": "https://ireadcustomer.com/th",
+      "founded": null,
+      "mission": "To be Data + AI experts who turn raw data into a powerhouse that drives your business into a new era of efficiency and competition.",
+      "url": "https://ireadcustomer.com/th",
+      "added_at": "2025-11-28T20:55:10.869880"
+    }
+  ],
+  "searches": []
+}
