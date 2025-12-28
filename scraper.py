@@ -19,8 +19,6 @@ class CompanyProfile(BaseModel):
     website: str = Field(description="Company website URL")
     founded: Optional[str] = Field(default=None, description="Year founded")
     mission: Optional[str] = Field(default=None, description="Mission statement")
-    
-    # New fields
     key_people: list[str] = Field(default_factory=list, description="Important roles/people (CEO, Founders, etc)")
     goals: Optional[str] = Field(default=None, description="Company goals or strategic interests")
     stage: Optional[str] = Field(default=None, description="Company stage (Startup, SME, Enterprise, etc)")
@@ -31,47 +29,67 @@ class WebScraper:
     """Web scraping functionality using BeautifulSoup and AI extraction (Async)."""
     
     def __init__(self):
+        # Refactored headers to bypass bot detection (Cloudflare/520 errors)
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
         }
     
     async def fetch_page_content(self, url: str) -> Optional[str]:
         """Fetch and extract text content from a webpage asynchronously."""
         try:
             url = clean_url(url)
-            async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
+            # Use a fresh client for each request with a slightly longer timeout for cloud servers
+            async with httpx.AsyncClient(timeout=20.0, follow_redirects=True, verify=False) as client:
                 response = await client.get(url, headers=self.headers)
-            response.raise_for_status()
             
+            if response.status_code != 200:
+                print(f"⚠️ Failed to fetch {url}. Status code: {response.status_code}")
+                return None
+                
             soup = BeautifulSoup(response.content, 'html.parser')
             
-            # Remove script and style elements
-            for element in soup(['script', 'style', 'nav', 'footer', 'header']):
+            # Remove noise
+            for element in soup(['script', 'style', 'nav', 'footer', 'header', 'aside']):
                 element.decompose()
             
-            # Get text content
             text = soup.get_text(separator='\n', strip=True)
-            
-            # Clean up whitespace
             lines = [line.strip() for line in text.splitlines() if line.strip()]
             text = '\n'.join(lines)
             
-            # Limit content length for API
-            return text[:20000] if len(text) > 20000 else text
+            # OpenRouter context window management
+            return text[:15000] if len(text) > 15000 else text
             
+        except httpx.HTTPStatusError as e:
+            print(f"🛑 HTTP error occurred: {e.response.status_code} for {url}")
+            return None
         except Exception as e:
-            print(f"Error fetching page: {e}")
+            print(f"❌ Scraping error for {url}: {str(e)}")
             return None
     
     async def extract_company_info_with_ai(self, url: str, page_content: str) -> Optional[dict]:
-        """Use OpenRouter (Gemini 2.5) to extract structured company information asynchronously."""
+        """Use OpenRouter to extract structured company information."""
         
+        if not Config.OPENROUTER_API_KEY:
+            print("❌ Error: OPENROUTER_API_KEY is missing in environment variables.")
+            return None
+
         try:
+            # Updated Referer for Render deployment
             headers = {
                 "Authorization": f"Bearer {Config.OPENROUTER_API_KEY}",
                 "Content-Type": "application/json",
-                "HTTP-Referer": "http://localhost:5001",
-                "X-Title": "Business Matcher"
+                "HTTP-Referer": "https://lead-discovery-app.onrender.com", # Update to your real Render URL later
+                "X-Title": "Lead Discovery System"
             }
             
             extraction_prompt = f"""
@@ -84,95 +102,73 @@ class WebScraper:
                 "industry": "Primary industry",
                 "size": "Company size (e.g., '1-10', '11-50', '50-200', 'Enterprise')",
                 "location": "Headquarters location",
-                "specialties": ["specialty1", "specialty2", ...],
-                "services": ["service1", "service2", ...],
+                "specialties": ["specialty1", "specialty2"],
+                "services": ["service1", "service2"],
                 "website": "{url}",
                 "founded": "Year founded or null",
                 "mission": "Mission statement or null",
-                "key_people": ["Name (Role)", "Name (Role)", ...],
-                "goals": "Key business goals or strategic interests mentioned",
-                "stage": "Startup|SME|Enterprise|Corporation (Infer from size/history)",
-                "budget_estimate": "Estimated revenue/budget range if mentioned (or 'Unknown')"
+                "key_people": ["Name (Role)"],
+                "goals": "Strategic interests mentioned",
+                "stage": "Startup|SME|Enterprise|Corporation",
+                "budget_estimate": "Estimated revenue/budget range or 'Unknown'"
             }}
             
-            Infere information if not explicitly stated, but be realistic.
-            
-            Website URL: {url}
-            
-            Page Content:
+            Webpage Content:
             {page_content}
             
-            Return ONLY valid JSON, no markdown or explanation.
+            Return ONLY valid JSON. No markdown blocks.
             """
             
             payload = {
                 "model": Config.OPENROUTER_MODEL,
                 "messages": [
-                    {
-                        "role": "system",
-                        "content": "You are an expert business analyst. Extract company information from webpage content and return structured JSON."
-                    },
-                    {
-                        "role": "user",
-                        "content": extraction_prompt
-                    }
+                    {"role": "system", "content": "You are a professional business intelligence analyst."},
+                    {"role": "user", "content": extraction_prompt}
                 ],
-                "temperature": 0.1,
-                "max_tokens": 2000
+                "temperature": 0.1
             }
             
-            async with httpx.AsyncClient(timeout=60.0) as client:
+            async with httpx.AsyncClient(timeout=45.0) as client:
                 response = await client.post(
                     f"{Config.OPENROUTER_BASE_URL}/chat/completions",
                     headers=headers,
                     json=payload
                 )
+            
+            if response.status_code == 401:
+                print("❌ OpenRouter API Key Rejected (401). Check credits or key accuracy.")
+                return None
+
             response.raise_for_status()
             
             result = response.json()
-            content = result['choices'][0]['message']['content']
+            content = result['choices'][0]['message']['content'].strip()
             
-            # Parse JSON from response
-            content = content.strip()
-            if content.startswith('```json'):
-                content = content[7:]
+            # Clean possible markdown formatting from AI
             if content.startswith('```'):
-                content = content[3:]
-            if content.endswith('```'):
-                content = content[:-3]
+                content = content.split('```')[1]
+                if content.startswith('json'):
+                    content = content[4:]
             
             company_data = json.loads(content.strip())
             company_data['url'] = url
-            
             return company_data
             
         except Exception as e:
-            print(f"AI extraction error: {e}")
+            print(f"🤖 AI Extraction Error: {str(e)}")
             return None
     
     async def scrape_company(self, url: str) -> Optional[dict]:
-        """
-        Main method to scrape and extract company information asynchronously.
-        """
-        print(f"🔍 Scraping: {url}")
+        """Main method to scrape and extract company information."""
+        print(f"🔍 Starting Scrape for: {url}")
         
-        # Step 1: Fetch page content
         page_content = await self.fetch_page_content(url)
         if not page_content:
-            return {
-                "error": True,
-                "message": f"Could not fetch content from {url}",
-                "url": url
-            }
+            return {"error": True, "message": f"Website blocked the request or URL is invalid.", "url": url}
         
-        # Step 2: Extract company info using AI
         company_info = await self.extract_company_info_with_ai(url, page_content)
         if not company_info:
-            return {
-                "error": True,
-                "message": f"Could not extract company information from {url}",
-                "url": url
-            }
+            return {"error": True, "message": f"AI could not parse the content (Check API Key/Credits).", "url": url}
         
-        print(f"✅ Successfully scraped: {company_info.get('name', 'Unknown')}")
+        print(f"✅ Successful extract: {company_info.get('name')}")
         return company_info
