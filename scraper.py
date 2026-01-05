@@ -9,20 +9,20 @@ from tools import clean_url, extract_domain
 
 class CompanyProfile(BaseModel):
     """Structured data for a company profile."""
-    name: str = Field(description="The official name of the company")
-    description: str = Field(description="A detailed description of the company")
-    industry: str = Field(description="The primary industry")
-    size: str = Field(description="Company size (employees)")
-    location: str = Field(description="Headquarters location")
-    specialties: list[str] = Field(default_factory=list, description="Key specialties")
-    services: list[str] = Field(default_factory=list, description="Services offered")
-    website: str = Field(description="Company website URL")
-    founded: Optional[str] = Field(default=None, description="Year founded")
-    mission: Optional[str] = Field(default=None, description="Mission statement")
-    key_people: list[str] = Field(default_factory=list, description="Important roles/people (CEO, Founders, etc)")
-    goals: Optional[str] = Field(default=None, description="Company goals or strategic interests")
-    stage: Optional[str] = Field(default=None, description="Company stage (Startup, SME, Enterprise, etc)")
-    budget_estimate: Optional[str] = Field(default=None, description="Estimated budget or revenue range if available")
+    name: str = Field(description="The official name of the company, ชื่อบริษัท")
+    description: str = Field(description="A detailed description of the company, รายละเอียดบริษัท")
+    industry: str = Field(description="The primary industry, ประเภทธุรกิจ")
+    size: str = Field(description="Company size (employees), ขนาดบริษัท (จํานวนพนักงานบริษัท)")
+    location: str = Field(description="Headquarters location, สถานที่ตั้ง")
+    specialties: list[str] = Field(default_factory=list, description="Key specialties, ความเชี่ยวชาญ")
+    services: list[str] = Field(default_factory=list, description="Services offered, บริการ")
+    website: str = Field(description="Company website URL, เว็บไซต์")
+    founded: Optional[str] = Field(default=None, description="Year founded, ปีที่ก่อตั้ง")
+    mission: Optional[str] = Field(default=None, description="Mission statement, วิสัยทัศน์")
+    key_people: list[str] = Field(default_factory=list, description="Important roles/people (CEO, Founders, etc), ผู้บริหาร,ผู้ก่อตั้ง")
+    goals: Optional[str] = Field(default=None, description="Company goals or strategic interests, วัตถุประสงค์")
+    stage: Optional[str] = Field(default=None, description="Company stage (Startup, SME, Enterprise, etc), มาตราส่วนบริษัท")
+    budget_estimate: Optional[str] = Field(default=None, description="Estimated budget or revenue range if available, งบลงทุนบริษัท")
 
 
 class WebScraper:
@@ -97,16 +97,16 @@ class WebScraper:
             Return a JSON object with these exact fields:
             
             {{
-                "name": "Company official name",
-                "description": "Detailed company description (2-3 paragraphs)",
-                "industry": "Primary industry",
+                "name": "Company official name or brand name",
+                "description": "Detailed and adept company description (2-3 paragraphs)",
+                "industry": "Primary industry ",
                 "size": "Company size (e.g., '1-10', '11-50', '50-200', 'Enterprise')",
                 "location": "Headquarters location",
                 "specialties": ["specialty1", "specialty2"],
-                "services": ["service1", "service2"],
+                "services": ["service1", "service2", "service3", "service4", "service5"],
                 "website": "{url}",
-                "founded": "Year founded or null",
-                "mission": "Mission statement or null",
+                "founded": "Year founded or Not Found",
+                "mission": "Mission statement or Not Found",
                 "key_people": ["Name (Role)"],
                 "goals": "Strategic interests mentioned",
                 "stage": "Startup|SME|Enterprise|Corporation",
@@ -117,12 +117,13 @@ class WebScraper:
             {page_content}
             
             Return ONLY valid JSON. No markdown blocks.
+            IMPORTANT: If the webpage content is in Thai, output the values in Thai. If it is in English, output in English. Do not Translate unless necessary for understanding context.
             """
             
             payload = {
                 "model": Config.OPENROUTER_MODEL,
                 "messages": [
-                    {"role": "system", "content": "You are a professional business intelligence analyst."},
+                    {"role": "system", "content": "You are a professional business intelligence analyst. You are capable of processing and outputting content in both English and Thai fluently."},
                     {"role": "user", "content": extraction_prompt}
                 ],
                 "temperature": 0.1
