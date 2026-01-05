@@ -121,16 +121,17 @@ class ComparisonEngine:
             "overall_opportunity": "Final verdict on the partnership/sales opportunity"
         }}
         
-        Return ONLY valid JSON.
-        """
-        
+            Return ONLY valid JSON.
+            IMPORTANT: If the companies involved are Thai or the input data is in Thai, provide the analysis and explanations in Thai. If they are international/English, use English.
+            """
+            
         try:
             payload = {
                 "model": Config.OPENROUTER_MODEL,
                 "messages": [
                     {
                         "role": "system",
-                        "content": "You are a strategic business consultant expert in B2B matching."
+                        "content": "You are a strategic business consultant expert in B2B matching. You are fluent in both English and Thai."
                     },
                     {
                         "role": "user",
