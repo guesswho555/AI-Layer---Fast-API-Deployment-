@@ -23,9 +23,9 @@ from tools import save_report_to_file
 # the script is imported by a production server
 try:
     Config.validate()
-    print("✅ Configuration validated successfully")
+    print("Configuration validated successfully")
 except ValueError as e:
-    print(f"❌ Configuration Error: {e}")
+    print(f"Configuration Error: {e}")
     # On Render, we don't want to exit(1) immediately during build, 
     # but we print the error clearly for the logs.
 
@@ -70,10 +70,11 @@ class SelectUrlRequest(BaseModel):
 class CompareRequest(BaseModel):
     user_company: Dict[str, Any]
     lead_company: Dict[str, Any]
+    icp_profile: Optional[Dict[str, Any]] = {}
 
 # =============================================================
 # 4. ROUTES
-# =============================-================================
+# =============================================================
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -97,7 +98,7 @@ async def phase2_search(request: SetLeadRequest):
             'data': {'lead_name': request.name, 'results': search_results}
         }
     except Exception as e:
-        print(f"❌ Phase 2 Error: {e}")
+        print(f"Phase 2 Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # PHASE 4: Scrape
@@ -116,7 +117,7 @@ async def phase4_scrape_lead(request: SelectUrlRequest):
     except HTTPException as he:
         raise he
     except Exception as e:
-        print(f"❌ Phase 4 Error: {e}")
+        print(f"Phase 4 Error: {e}")
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 # PHASE 5: Compare
@@ -125,13 +126,14 @@ async def phase5_compare(data: CompareRequest):
     try:
         report = await comparison_engine.compare_companies(
             user_company=data.user_company,
-            lead_company=data.lead_company
+            lead_company=data.lead_company,
+            icp_profile=data.icp_profile
         )
         report_path = save_report_to_file(report)
         report['saved_to'] = report_path
         return {'status': 'success', 'data': report}
     except Exception as e:
-        print(f"❌ Phase 5 Error: {e}")
+        print(f"Phase 5 Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # =============================================================
@@ -144,5 +146,5 @@ if __name__ == "__main__":
     # We default to Config.PORT (5001) only if running locally
     port = int(os.environ.get("PORT", Config.PORT))
     
-    print(f"🚀 Starting Server on port {port}")
+    print(f"Starting Server on port {port}")
     uvicorn.run("app:app", host="0.0.0.0", port=port, reload=Config.DEBUG)
