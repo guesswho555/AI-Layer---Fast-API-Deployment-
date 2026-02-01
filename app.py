@@ -12,6 +12,8 @@ from typing import Dict, Any, Optional
 from config import Config
 from scraper import WebScraper
 from search_engine import SearchEngine
+from comparison_engine import ComparisonEngine
+from tools import save_report_to_file
 
 # =============================================================
 # 1. VALIDATION & INITIALIZATION
