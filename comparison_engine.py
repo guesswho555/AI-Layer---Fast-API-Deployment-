@@ -1,7 +1,8 @@
 import json
 import httpx
-from typing import Optional
+from typing import Optional, Dict, Any
 from config import Config
+from icp_scoring import ICPScoring
 
 
 class ComparisonEngine:
@@ -18,19 +19,29 @@ class ComparisonEngine:
             "HTTP-Referer": "http://localhost:5001",
             "X-Title": "Business Matcher"
         }
+        self.icp_scorer = ICPScoring()
     
     async def compare_companies(
         self,
         user_company: dict,
-        lead_company: dict
+        lead_company: dict,
+        icp_profile: Optional[dict] = None
     ) -> dict:
         """
         Compare User's company with Lead's company and generate a report.
+        Also runs ICP Scoring if profile is provided.
         """
         print(f"📊 Comparing: {user_company.get('name')} (User) vs {lead_company.get('name')} (Lead)")
         
+        # Step 0: Run ICP Scoring
+        icp_result = {}
+        if icp_profile:
+             print("🎯 Running ICP Scoring...")
+             icp_result = self.icp_scorer.evaluate_lead(lead_company, icp_profile)
+             print(f"   Score: {icp_result.get('score')} ({icp_result.get('grade')})")
+
         # Step 1: Generate detailed comparison with explanations
-        comparison = await self._generate_detailed_comparison(user_company, lead_company)
+        comparison = await self._generate_detailed_comparison(user_company, lead_company, icp_result)
         
         # Step 2: Calculate numeric scores
         numeric_summary = await self._calculate_numeric_scores(
@@ -43,6 +54,7 @@ class ComparisonEngine:
         report = {
             "user_company": user_company,
             "lead_company": lead_company,
+            "icp_analysis": icp_result,
             "comparison": comparison,
             "numeric_summary": numeric_summary
         }
@@ -54,12 +66,26 @@ class ComparisonEngine:
     async def _generate_detailed_comparison(
         self,
         user: dict,
-        lead: dict
+        lead: dict,
+        icp_result: dict
     ) -> dict:
         """Generate AI-powered comparison analysis asynchronously."""
         
+        icp_context = ""
+        if icp_result:
+             icp_context = f"""
+             ICP AUTOMATED ANALYSIS RESULTS:
+             - Score: {icp_result.get('score')} / 100
+             - Grade: {icp_result.get('grade')}
+             - Status: {icp_result.get('status')}
+             - Signals Found: {json.dumps(icp_result.get('signals'))}
+             
+             Use this ICP analysis to inform your qualitative assessment. If the score is low or there are negative signals, highlight risks.
+             """
+        
         comparison_prompt = f"""
         Perform a comprehensive B2B business matching analysis.
+        {icp_context}
         
         USER COMPANY (My Company):
         - Name: {user.get('name')}
